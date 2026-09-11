@@ -1,4 +1,4 @@
-// Guardian UI - SDL2-based appliance interface
+// Guardian UI - Enhanced with detection capabilities
 const std = @import("std");
 const common = @import("guardian-common");
 const sdl = @import("sdl.zig");
@@ -9,10 +9,13 @@ const types = common.types;
 const CameraGrid = @import("camera_grid.zig").CameraGrid;
 const ArmKeypad = @import("arm_keypad.zig").ArmKeypad;
 const IntercomPanel = @import("intercom_panel.zig").IntercomPanel;
+const DetectionPanel = @import("detection_panel.zig").DetectionPanel;
+const CameraConfigPanel = @import("camera_config_panel.zig").CameraConfigPanel;
+const ApiClient = @import("api_client.zig").ApiClient;
 
 const SERVICE_NAME = "ui";
 
-/// Main UI application
+/// Main UI application with advanced detection support
 pub const GuardianUI = struct {
     allocator: std.mem.Allocator,
     config: types.SiteConfig,
@@ -21,28 +24,36 @@ pub const GuardianUI = struct {
     renderer: *sdl.SDL_Renderer,
     running: bool,
     
+    // API client
+    api_client: ApiClient,
+    
+    // Views
     camera_grid: CameraGrid,
     arm_keypad: ArmKeypad,
     intercom_panel: IntercomPanel,
+    detection_panel: DetectionPanel,
+    camera_config_panel: CameraConfigPanel,
     
     current_view: View,
     window_width: u32 = 1280,
     window_height: u32 = 720,
 
     const View = enum {
-        camera_grid,
-        arm_keypad,
-        intercom,
+        camera_grid,        // Press 1
+        arm_keypad,         // Press 2
+        intercom,           // Press 3
+        detections,         // Press 4
+        camera_config,      // Press 5
     };
 
-    pub fn init(allocator: std.mem.Allocator, config: types.SiteConfig) !GuardianUI {
+    pub fn init(allocator: std.mem.Allocator, config: types.SiteConfig, api_url: []const u8) !GuardianUI {
         if (sdl.SDL_Init(sdl.SDL_INIT_VIDEO) < 0) {
             log.err(SERVICE_NAME, "SDL_Init failed: {s}", .{sdl.SDL_GetError()});
             return error.SDLInitFailed;
         }
 
         const window = sdl.SDL_CreateWindow(
-            "Guardian Security System",
+            "Guardian Security System - AI Detection Enabled",
             sdl.SDL_WINDOWPOS_UNDEFINED,
             sdl.SDL_WINDOWPOS_UNDEFINED,
             1280,
@@ -69,23 +80,34 @@ pub const GuardianUI = struct {
             .window = window,
             .renderer = renderer,
             .running = false,
+            .api_client = ApiClient.init(allocator, api_url),
             .camera_grid = try CameraGrid.init(allocator, config.cameras),
             .arm_keypad = ArmKeypad.init(),
             .intercom_panel = IntercomPanel.init(),
+            .detection_panel = DetectionPanel.init(allocator),
+            .camera_config_panel = CameraConfigPanel.init(allocator, config.cameras),
             .current_view = .camera_grid,
         };
     }
 
     pub fn deinit(self: *GuardianUI) void {
         self.camera_grid.deinit();
+        self.detection_panel.deinit();
+        self.camera_config_panel.deinit();
+        self.api_client.deinit();
         sdl.SDL_DestroyRenderer(self.renderer);
         sdl.SDL_DestroyWindow(self.window);
         sdl.SDL_Quit();
     }
 
     pub fn run(self: *GuardianUI) !void {
-        log.info(SERVICE_NAME, "Guardian UI starting", .{});
+        log.info(SERVICE_NAME, "Guardian UI starting with advanced detection support", .{});
         self.running = true;
+
+        // Test API connection
+        self.api_client.ping() catch |err| {
+            log.warn(SERVICE_NAME, "API not available: {s}", .{@errorName(err)});
+        };
 
         while (self.running) {
             try self.handleEvents();
@@ -116,33 +138,43 @@ pub const GuardianUI = struct {
     fn handleKeyDown(self: *GuardianUI, event: *const sdl.SDL_KeyboardEvent) !void {
         const key = event.keysym.sym;
         
-        // Switch views with F-keys
+        // View switching
         if (key == '1') {
             self.current_view = .camera_grid;
-            log.info(SERVICE_NAME, "Switched to camera grid view", .{});
+            log.info(SERVICE_NAME, "View: Camera Grid", .{});
         } else if (key == '2') {
             self.current_view = .arm_keypad;
-            log.info(SERVICE_NAME, "Switched to arm/disarm keypad", .{});
+            log.info(SERVICE_NAME, "View: Arm/Disarm Keypad", .{});
         } else if (key == '3') {
             self.current_view = .intercom;
-            log.info(SERVICE_NAME, "Switched to intercom panel", .{});
+            log.info(SERVICE_NAME, "View: Intercom", .{});
+        } else if (key == '4') {
+            self.current_view = .detections;
+            log.info(SERVICE_NAME, "View: Detection Events", .{});
+        } else if (key == '5') {
+            self.current_view = .camera_config;
+            log.info(SERVICE_NAME, "View: Camera Configuration", .{});
         }
         
-        // Handle view-specific input
+        // View-specific input
         switch (self.current_view) {
             .arm_keypad => {
-                // Numeric keys
                 if (key >= sdl.SDLK_0 and key <= sdl.SDLK_9) {
                     self.arm_keypad.addDigit(@intCast(key));
                 } else if (key == sdl.SDLK_BACKSPACE) {
                     self.arm_keypad.clear();
                 } else if (key == sdl.SDLK_RETURN) {
                     const pin = self.arm_keypad.getCurrentPin();
-                    log.info(SERVICE_NAME, "PIN entered: {s}", .{pin});
-                    // TODO: Send to guardian-api for validation
+                    log.info(SERVICE_NAME, "PIN entered, length: {d}", .{pin.len});
+                    // TODO: self.api_client.disarmAlarm(pin)
                 }
             },
             else => {},
+        }
+        
+        // ESC to quit
+        if (key == sdl.SDLK_ESCAPE) {
+            self.running = false;
         }
     }
 
@@ -152,10 +184,9 @@ pub const GuardianUI = struct {
                 const x = event.x;
                 const y = event.y;
                 
-                // Calculate which camera was clicked
                 const layout = self.camera_grid.getGridLayout();
                 const cell_width = @divTrunc(self.window_width, layout.cols);
-                const cell_height = @divTrunc(self.window_height, layout.rows);
+                const cell_height = @divTrunc(self.window_height - 30, layout.rows);
                 
                 const col = @divTrunc(@as(u32, @intCast(x)), cell_width);
                 const row = @divTrunc(@as(u32, @intCast(y)), cell_height);
@@ -163,17 +194,15 @@ pub const GuardianUI = struct {
                 
                 if (index < self.config.cameras.len) {
                     self.camera_grid.selectCamera(@intCast(index));
-                    log.info(SERVICE_NAME, "Selected camera #{d}: {s}", .{
-                        index, self.config.cameras[index].name,
+                    log.info(SERVICE_NAME, "Selected camera: {s}", .{
+                        self.config.cameras[index].name,
                     });
                 }
             },
-            .arm_keypad => {
-                // TODO: Check if click was on a button
+            .camera_config => {
+                // TODO: Handle clicks on camera list and toggles
             },
-            .intercom => {
-                // TODO: Check if click was on answer/hangup/talk button
-            },
+            else => {},
         }
     }
 
@@ -187,6 +216,8 @@ pub const GuardianUI = struct {
             .camera_grid => try self.renderCameraGrid(),
             .arm_keypad => try self.renderArmKeypad(),
             .intercom => try self.renderIntercom(),
+            .detections => try self.renderDetections(),
+            .camera_config => try self.renderCameraConfig(),
         }
 
         // Render status bar
@@ -198,7 +229,7 @@ pub const GuardianUI = struct {
     fn renderCameraGrid(self: *GuardianUI) !void {
         const layout = self.camera_grid.getGridLayout();
         const cell_width = @divTrunc(self.window_width, layout.cols);
-        const cell_height = @divTrunc(self.window_height - 30, layout.rows); // Reserve 30px for status bar
+        const cell_height = @divTrunc(self.window_height - 30, layout.rows);
 
         for (self.config.cameras, 0..) |camera, i| {
             const col = i % layout.cols;
@@ -209,10 +240,9 @@ pub const GuardianUI = struct {
             const w: c_int = @intCast(cell_width);
             const h: c_int = @intCast(cell_height);
 
-            // Draw cell border
             var rect = sdl.SDL_Rect{ .x = x, .y = y, .w = w, .h = h };
             
-            // Highlight selected camera
+            // Highlight selected
             if (self.camera_grid.selected_camera) |selected| {
                 if (selected == i) {
                     _ = sdl.SDL_SetRenderDrawColor(self.renderer, 0, 150, 255, 255);
@@ -222,35 +252,48 @@ pub const GuardianUI = struct {
             } else {
                 _ = sdl.SDL_SetRenderDrawColor(self.renderer, 60, 60, 70, 255);
             }
-            
             _ = sdl.SDL_RenderDrawRect(self.renderer, &rect);
 
-            // Draw camera name (simplified - in production would use SDL_ttf)
-            // For now, just show a placeholder rectangle representing the camera
-            const inner_margin = 10;
-            rect.x += inner_margin;
-            rect.y += inner_margin;
-            rect.w -= inner_margin * 2;
-            rect.h -= inner_margin * 2;
-            
+            // Inner area
+            const margin = 10;
+            rect.x += margin;
+            rect.y += margin;
+            rect.w -= margin * 2;
+            rect.h -= margin * 2;
             _ = sdl.SDL_SetRenderDrawColor(self.renderer, 40, 40, 50, 255);
             _ = sdl.SDL_RenderFillRect(self.renderer, &rect);
 
-            // Camera indicator based on resolution
-            const indicator_size = 10;
-            const indicator_rect = sdl.SDL_Rect{
-                .x = x + inner_margin + 5,
-                .y = y + inner_margin + 5,
-                .w = indicator_size,
-                .h = indicator_size,
-            };
-            
-            switch (camera.max_resolution) {
-                .full_hd => _ = sdl.SDL_SetRenderDrawColor(self.renderer, 100, 200, 100, 255),
-                .uhd_4k => _ = sdl.SDL_SetRenderDrawColor(self.renderer, 100, 150, 255, 255),
-                .uhd_8k => _ = sdl.SDL_SetRenderDrawColor(self.renderer, 255, 100, 100, 255),
+            // Detection capabilities indicators
+            const caps = camera.detection_capabilities;
+            var indicator_x = x + margin + 5;
+            const indicator_y = y + margin + 5;
+            const indicator_size = 8;
+            const indicator_spacing = 12;
+
+            // Show enabled detection types
+            if (caps.facial_recognition) {
+                const ind = sdl.SDL_Rect{ .x = indicator_x, .y = indicator_y, .w = indicator_size, .h = indicator_size };
+                _ = sdl.SDL_SetRenderDrawColor(self.renderer, 100, 150, 255, 255); // Blue = face
+                _ = sdl.SDL_RenderFillRect(self.renderer, &ind);
+                indicator_x += indicator_spacing;
             }
-            _ = sdl.SDL_RenderFillRect(self.renderer, &indicator_rect);
+            if (caps.plate_recognition or caps.vehicle_recognition) {
+                const ind = sdl.SDL_Rect{ .x = indicator_x, .y = indicator_y, .w = indicator_size, .h = indicator_size };
+                _ = sdl.SDL_SetRenderDrawColor(self.renderer, 255, 200, 100, 255); // Orange = vehicle
+                _ = sdl.SDL_RenderFillRect(self.renderer, &ind);
+                indicator_x += indicator_spacing;
+            }
+            if (caps.pet_detection) {
+                const ind = sdl.SDL_Rect{ .x = indicator_x, .y = indicator_y, .w = indicator_size, .h = indicator_size };
+                _ = sdl.SDL_SetRenderDrawColor(self.renderer, 255, 150, 200, 255); // Pink = pet
+                _ = sdl.SDL_RenderFillRect(self.renderer, &ind);
+                indicator_x += indicator_spacing;
+            }
+            if (caps.gait_recognition) {
+                const ind = sdl.SDL_Rect{ .x = indicator_x, .y = indicator_y, .w = indicator_size, .h = indicator_size };
+                _ = sdl.SDL_SetRenderDrawColor(self.renderer, 100, 255, 200, 255); // Cyan = gait
+                _ = sdl.SDL_RenderFillRect(self.renderer, &ind);
+            }
         }
     }
 
@@ -260,40 +303,24 @@ pub const GuardianUI = struct {
         const x: c_int = @intCast((self.window_width - keypad_width) / 2);
         const y: c_int = @intCast((self.window_height - keypad_height) / 2);
 
-        // Draw keypad background
-        const bg_rect = sdl.SDL_Rect{
-            .x = x,
-            .y = y,
-            .w = keypad_width,
-            .h = keypad_height,
-        };
+        const bg_rect = sdl.SDL_Rect{ .x = x, .y = y, .w = keypad_width, .h = keypad_height };
         _ = sdl.SDL_SetRenderDrawColor(self.renderer, 50, 50, 60, 255);
         _ = sdl.SDL_RenderFillRect(self.renderer, &bg_rect);
-        
         _ = sdl.SDL_SetRenderDrawColor(self.renderer, 100, 100, 120, 255);
         _ = sdl.SDL_RenderDrawRect(self.renderer, &bg_rect);
 
-        // Draw PIN display area
-        const pin_display = sdl.SDL_Rect{
-            .x = x + 20,
-            .y = y + 20,
-            .w = keypad_width - 40,
-            .h = 40,
-        };
+        // PIN display
+        const pin_display = sdl.SDL_Rect{ .x = x + 20, .y = y + 20, .w = keypad_width - 40, .h = 40 };
         _ = sdl.SDL_SetRenderDrawColor(self.renderer, 30, 30, 40, 255);
         _ = sdl.SDL_RenderFillRect(self.renderer, &pin_display);
-        
         _ = sdl.SDL_SetRenderDrawColor(self.renderer, 80, 80, 90, 255);
         _ = sdl.SDL_RenderDrawRect(self.renderer, &pin_display);
 
-        // Draw PIN dots (masked)
+        // PIN dots
         const pin = self.arm_keypad.getCurrentPin();
-        const dot_spacing = 20;
-        const dot_start_x = x + 40;
         for (0..pin.len) |i| {
-            const dot_x = dot_start_x + @as(c_int, @intCast(i * dot_spacing));
             const dot_rect = sdl.SDL_Rect{
-                .x = dot_x,
+                .x = x + 40 + @as(c_int, @intCast(i * 20)),
                 .y = y + 35,
                 .w = 8,
                 .h = 8,
@@ -302,58 +329,16 @@ pub const GuardianUI = struct {
             _ = sdl.SDL_RenderFillRect(self.renderer, &dot_rect);
         }
 
-        // Draw state indicator
-        const state_text_y = y + 80;
+        // State indicator
+        const state_rect = sdl.SDL_Rect{ .x = x + keypad_width / 2 - 50, .y = y + 80, .w = 100, .h = 30 };
         const state_color = switch (self.arm_keypad.current_state) {
             .disarmed => sdl.SDL_Color{ .r = 100, .g = 200, .b = 100, .a = 255 },
             .armed_away, .armed_stay => sdl.SDL_Color{ .r = 200, .g = 100, .b = 100, .a = 255 },
             .alarm => sdl.SDL_Color{ .r = 255, .g = 50, .b = 50, .a = 255 },
             else => sdl.SDL_Color{ .r = 150, .g = 150, .b = 150, .a = 255 },
         };
-        
-        const state_rect = sdl.SDL_Rect{
-            .x = x + keypad_width / 2 - 50,
-            .y = state_text_y,
-            .w = 100,
-            .h = 30,
-        };
         _ = sdl.SDL_SetRenderDrawColor(self.renderer, state_color.r, state_color.g, state_color.b, state_color.a);
         _ = sdl.SDL_RenderFillRect(self.renderer, &state_rect);
-
-        // Draw numeric buttons (3x4 grid)
-        const button_size = 60;
-        const button_spacing = 10;
-        const button_start_x = x + (keypad_width - (button_size * 3 + button_spacing * 2)) / 2;
-        const button_start_y = y + 150;
-
-        var btn_num: u8 = 1;
-        var row: u8 = 0;
-        while (row < 4) : (row += 1) {
-            var col: u8 = 0;
-            while (col < 3) : (col += 1) {
-                if (row == 3 and col != 1) continue; // Skip 10th and 12th positions
-                
-                const btn_x = button_start_x + @as(c_int, col) * (button_size + button_spacing);
-                const btn_y = button_start_y + @as(c_int, row) * (button_size + button_spacing);
-                
-                const btn_rect = sdl.SDL_Rect{
-                    .x = btn_x,
-                    .y = btn_y,
-                    .w = button_size,
-                    .h = button_size,
-                };
-                
-                _ = sdl.SDL_SetRenderDrawColor(self.renderer, 70, 70, 80, 255);
-                _ = sdl.SDL_RenderFillRect(self.renderer, &btn_rect);
-                
-                _ = sdl.SDL_SetRenderDrawColor(self.renderer, 120, 120, 130, 255);
-                _ = sdl.SDL_RenderDrawRect(self.renderer, &btn_rect);
-                
-                if (row < 3) {
-                    btn_num += 1;
-                }
-            }
-        }
     }
 
     fn renderIntercom(self: *GuardianUI) !void {
@@ -362,72 +347,41 @@ pub const GuardianUI = struct {
         const x: c_int = @intCast((self.window_width - panel_width) / 2);
         const y: c_int = @intCast((self.window_height - panel_height) / 2);
 
-        // Draw panel background
-        const bg_rect = sdl.SDL_Rect{
-            .x = x,
-            .y = y,
-            .w = panel_width,
-            .h = panel_height,
-        };
+        const bg_rect = sdl.SDL_Rect{ .x = x, .y = y, .w = panel_width, .h = panel_height };
         _ = sdl.SDL_SetRenderDrawColor(self.renderer, 50, 50, 60, 255);
         _ = sdl.SDL_RenderFillRect(self.renderer, &bg_rect);
-        
         _ = sdl.SDL_SetRenderDrawColor(self.renderer, 100, 100, 120, 255);
         _ = sdl.SDL_RenderDrawRect(self.renderer, &bg_rect);
 
-        // Draw station status
         if (self.intercom_panel.active_session) |session| {
-            const status_rect = sdl.SDL_Rect{
-                .x = x + 20,
-                .y = y + 20,
-                .w = panel_width - 40,
-                .h = 60,
+            const status_rect = sdl.SDL_Rect{ .x = x + 20, .y = y + 20, .w = panel_width - 40, .h = 60 };
+            const color = switch (session.state) {
+                .ringing => sdl.SDL_Color{ .r = 255, .g = 165, .b = 0, .a = 255 },
+                .answered, .talking => sdl.SDL_Color{ .r = 100, .g = 200, .b = 100, .a = 255 },
             };
-            
-            const status_color = switch (session.state) {
-                .ringing => sdl.SDL_Color{ .r = 255, .g = 165, .b = 0, .a = 255 }, // Orange
-                .answered, .talking => sdl.SDL_Color{ .r = 100, .g = 200, .b = 100, .a = 255 }, // Green
-            };
-            
-            _ = sdl.SDL_SetRenderDrawColor(self.renderer, status_color.r, status_color.g, status_color.b, status_color.a);
+            _ = sdl.SDL_SetRenderDrawColor(self.renderer, color.r, color.g, color.b, color.a);
             _ = sdl.SDL_RenderFillRect(self.renderer, &status_rect);
-        } else {
-            // No active session
-            const idle_rect = sdl.SDL_Rect{
-                .x = x + 20,
-                .y = y + 20,
-                .w = panel_width - 40,
-                .h = 60,
-            };
-            _ = sdl.SDL_SetRenderDrawColor(self.renderer, 80, 80, 90, 255);
-            _ = sdl.SDL_RenderFillRect(self.renderer, &idle_rect);
         }
+    }
 
-        // Draw answer/hangup button
-        const button_y = y + 100;
-        const answer_btn = sdl.SDL_Rect{
-            .x = x + 50,
-            .y = button_y,
-            .w = 120,
-            .h = 50,
-        };
-        _ = sdl.SDL_SetRenderDrawColor(self.renderer, 100, 200, 100, 255);
-        _ = sdl.SDL_RenderFillRect(self.renderer, &answer_btn);
+    fn renderDetections(self: *GuardianUI) !void {
+        try self.detection_panel.render(
+            self.renderer,
+            10,
+            10,
+            @intCast(self.window_width - 20),
+            @intCast(self.window_height - 50),
+        );
+    }
 
-        // Draw talk button
-        const talk_btn = sdl.SDL_Rect{
-            .x = x + 230,
-            .y = button_y,
-            .w = 120,
-            .h = 50,
-        };
-        const talk_color = if (self.intercom_panel.active_session != null and
-            self.intercom_panel.active_session.?.state == .talking)
-            sdl.SDL_Color{ .r = 255, .g = 100, .b = 100, .a = 255 }
-        else
-            sdl.SDL_Color{ .r = 150, .g = 150, .b = 160, .a = 255 };
-        _ = sdl.SDL_SetRenderDrawColor(self.renderer, talk_color.r, talk_color.g, talk_color.b, talk_color.a);
-        _ = sdl.SDL_RenderFillRect(self.renderer, &talk_btn);
+    fn renderCameraConfig(self: *GuardianUI) !void {
+        try self.camera_config_panel.render(
+            self.renderer,
+            10,
+            10,
+            @intCast(self.window_width - 20),
+            @intCast(self.window_height - 50),
+        );
     }
 
     fn renderStatusBar(self: *GuardianUI) !void {
@@ -440,45 +394,30 @@ pub const GuardianUI = struct {
             .w = @intCast(self.window_width),
             .h = status_height,
         };
-        
         _ = sdl.SDL_SetRenderDrawColor(self.renderer, 40, 40, 50, 255);
         _ = sdl.SDL_RenderFillRect(self.renderer, &status_rect);
 
-        // Draw view indicators
+        // View indicators
+        const views = [_]View{ .camera_grid, .arm_keypad, .intercom, .detections, .camera_config };
         const indicator_size = 20;
         const indicator_y = y + 5;
-        
-        // Camera grid indicator
-        var indicator = sdl.SDL_Rect{
-            .x = 10,
-            .y = indicator_y,
-            .w = indicator_size,
-            .h = indicator_size,
-        };
-        if (self.current_view == .camera_grid) {
-            _ = sdl.SDL_SetRenderDrawColor(self.renderer, 100, 200, 100, 255);
-        } else {
-            _ = sdl.SDL_SetRenderDrawColor(self.renderer, 80, 80, 90, 255);
-        }
-        _ = sdl.SDL_RenderFillRect(self.renderer, &indicator);
 
-        // Keypad indicator
-        indicator.x = 50;
-        if (self.current_view == .arm_keypad) {
-            _ = sdl.SDL_SetRenderDrawColor(self.renderer, 100, 200, 100, 255);
-        } else {
-            _ = sdl.SDL_SetRenderDrawColor(self.renderer, 80, 80, 90, 255);
+        for (views, 0..) |view, i| {
+            const ind_x = 10 + @as(c_int, @intCast(i)) * (indicator_size + 20);
+            const ind = sdl.SDL_Rect{
+                .x = ind_x,
+                .y = indicator_y,
+                .w = indicator_size,
+                .h = indicator_size,
+            };
+            
+            if (self.current_view == view) {
+                _ = sdl.SDL_SetRenderDrawColor(self.renderer, 100, 200, 100, 255);
+            } else {
+                _ = sdl.SDL_SetRenderDrawColor(self.renderer, 80, 80, 90, 255);
+            }
+            _ = sdl.SDL_RenderFillRect(self.renderer, &ind);
         }
-        _ = sdl.SDL_RenderFillRect(self.renderer, &indicator);
-
-        // Intercom indicator
-        indicator.x = 90;
-        if (self.current_view == .intercom) {
-            _ = sdl.SDL_SetRenderDrawColor(self.renderer, 100, 200, 100, 255);
-        } else {
-            _ = sdl.SDL_SetRenderDrawColor(self.renderer, 80, 80, 90, 255);
-        }
-        _ = sdl.SDL_RenderFillRect(self.renderer, &indicator);
     }
 };
 
@@ -487,9 +426,9 @@ pub fn main() !void {
     defer _ = gpa.deinit();
     const allocator = gpa.allocator();
 
-    log.info(SERVICE_NAME, "Guardian UI starting", .{});
+    log.info(SERVICE_NAME, "Guardian UI with Advanced Detection starting", .{});
 
-    // TODO: Load config from API or file
+    // Demo config with detection capabilities
     const dummy_cameras = [_]types.CameraConfig{
         .{
             .id = "cam_front_gate",
@@ -499,6 +438,14 @@ pub fn main() !void {
             .audio_enabled = true,
             .detect_enabled = true,
             .intercom_enabled = true,
+            .detection_capabilities = .{
+                .facial_recognition = true,
+                .plate_recognition = true,
+                .vehicle_recognition = true,
+                .motion_detection = true,
+                .audio_detection = true,
+            },
+            .location = "entrance",
         },
         .{
             .id = "cam_driveway",
@@ -507,7 +454,12 @@ pub fn main() !void {
             .max_resolution = .full_hd,
             .audio_enabled = true,
             .detect_enabled = true,
-            .intercom_enabled = false,
+            .detection_capabilities = .{
+                .plate_recognition = true,
+                .vehicle_recognition = true,
+                .motion_detection = true,
+            },
+            .location = "driveway",
         },
         .{
             .id = "cam_backyard",
@@ -516,21 +468,31 @@ pub fn main() !void {
             .max_resolution = .full_hd,
             .audio_enabled = false,
             .detect_enabled = true,
-            .intercom_enabled = false,
+            .detection_capabilities = .{
+                .motion_detection = true,
+                .pet_detection = true,
+            },
+            .location = "backyard",
         },
         .{
-            .id = "cam_garage",
-            .name = "Garage",
+            .id = "cam_front_door",
+            .name = "Front Door",
             .rtsp_url = "rtsp://192.168.1.103:554/stream1",
-            .max_resolution = .full_hd,
-            .audio_enabled = false,
+            .max_resolution = .uhd_4k,
+            .audio_enabled = true,
             .detect_enabled = true,
-            .intercom_enabled = false,
+            .detection_capabilities = .{
+                .facial_recognition = true,
+                .gait_recognition = true,
+                .motion_detection = true,
+                .audio_detection = true,
+            },
+            .location = "entrance",
         },
     };
 
     const config = types.SiteConfig{
-        .site_name = "Test Site",
+        .site_name = "Smart Home Security",
         .cameras = &dummy_cameras,
         .zones = &.{},
         .backup_scope = .events_only,
@@ -539,7 +501,7 @@ pub fn main() !void {
         .relay_url = "wss://relay.guardian.example.com",
     };
 
-    var ui = try GuardianUI.init(allocator, config);
+    var ui = try GuardianUI.init(allocator, config, "http://localhost:8080");
     defer ui.deinit();
 
     try ui.run();

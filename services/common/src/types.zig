@@ -19,6 +19,12 @@ pub const CameraConfig = struct {
     
     /// Whether this is an intercom station (gate/door)
     intercom_enabled: bool = false,
+    
+    /// Advanced detection capabilities for this camera
+    detection_capabilities: DetectionCapabilities = .{},
+    
+    /// Camera location/zone for filtering
+    location: []const u8 = "default",
 };
 
 /// Resolution profiles for recording and live view
@@ -107,6 +113,112 @@ pub const SiteConfig = struct {
     backup_retention_days: u32,
     backup_bandwidth_cap_mbps: u32,
     relay_url: []const u8,
+};
+
+/// Advanced detection capabilities
+pub const DetectionCapabilities = struct {
+    /// Facial recognition enabled
+    facial_recognition: bool = false,
+    /// Number plate recognition enabled
+    plate_recognition: bool = false,
+    /// Vehicle recognition (make/model/color)
+    vehicle_recognition: bool = false,
+    /// Gait recognition (person identification by walk)
+    gait_recognition: bool = false,
+    /// Pet detection (cats, dogs, etc.)
+    pet_detection: bool = false,
+    /// General motion detection
+    motion_detection: bool = true,
+    /// Audio event detection
+    audio_detection: bool = false,
+};
+
+/// Detection event types
+pub const DetectionEvent = struct {
+    id: []const u8,
+    camera_id: []const u8,
+    timestamp_ms: u64,
+    event_type: DetectionType,
+    confidence: f32,
+    metadata: DetectionMetadata,
+    thumbnail_path: ?[]const u8 = null,
+    clip_path: ?[]const u8 = null,
+};
+
+pub const DetectionType = enum {
+    motion,
+    person,
+    face_recognized,
+    face_unknown,
+    vehicle,
+    license_plate,
+    pet,
+    audio_event,
+    gait_match,
+};
+
+pub const DetectionMetadata = union(enum) {
+    motion: MotionMetadata,
+    face: FaceMetadata,
+    vehicle: VehicleMetadata,
+    plate: PlateMetadata,
+    pet: PetMetadata,
+    gait: GaitMetadata,
+    audio: AudioMetadata,
+};
+
+pub const MotionMetadata = struct {
+    area_percent: f32,
+    intensity: f32,
+};
+
+pub const FaceMetadata = struct {
+    person_id: ?[]const u8,
+    person_name: ?[]const u8,
+    bbox_x: u32,
+    bbox_y: u32,
+    bbox_w: u32,
+    bbox_h: u32,
+};
+
+pub const VehicleMetadata = struct {
+    vehicle_type: []const u8, // car, truck, motorcycle, etc.
+    make: ?[]const u8,
+    model: ?[]const u8,
+    color: ?[]const u8,
+    bbox_x: u32,
+    bbox_y: u32,
+    bbox_w: u32,
+    bbox_h: u32,
+};
+
+pub const PlateMetadata = struct {
+    plate_number: []const u8,
+    region: ?[]const u8,
+    bbox_x: u32,
+    bbox_y: u32,
+    bbox_w: u32,
+    bbox_h: u32,
+};
+
+pub const PetMetadata = struct {
+    pet_type: []const u8, // dog, cat, etc.
+    breed: ?[]const u8,
+    bbox_x: u32,
+    bbox_y: u32,
+    bbox_w: u32,
+    bbox_h: u32,
+};
+
+pub const GaitMetadata = struct {
+    person_id: ?[]const u8,
+    person_name: ?[]const u8,
+    gait_signature: []const u8,
+};
+
+pub const AudioMetadata = struct {
+    audio_type: []const u8, // doorbell, glass_break, scream, etc.
+    duration_ms: u64,
 };
 
 test "resolution profile dimensions" {
