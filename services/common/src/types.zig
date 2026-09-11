@@ -113,6 +113,72 @@ pub const SiteConfig = struct {
     backup_retention_days: u32,
     backup_bandwidth_cap_mbps: u32,
     relay_url: []const u8,
+    storage: StorageConfig = .{},
+};
+
+/// Storage configuration for large HDDs/SSDs
+pub const StorageConfig = struct {
+    /// Base path for recordings (e.g., /srv/guardian/recordings)
+    recordings_path: []const u8 = "/srv/guardian/recordings",
+    
+    /// Maximum storage to use in GB (0 = unlimited)
+    max_storage_gb: u64 = 0,
+    
+    /// Minimum free space to maintain in GB
+    min_free_space_gb: u64 = 100,
+    
+    /// Start cleanup when free space drops below this (GB)
+    cleanup_threshold_gb: u64 = 150,
+    
+    /// Retention policy
+    retention: RetentionPolicy = .{},
+    
+    /// Enable storage monitoring
+    monitoring_enabled: bool = true,
+    
+    /// Alert when free space drops below percentage
+    alert_free_space_percent: u8 = 10,
+};
+
+/// Retention policy for recordings
+pub const RetentionPolicy = struct {
+    /// Continuous recording retention in days
+    continuous_days: u32 = 30,
+    
+    /// Event-triggered recording retention in days
+    events_days: u32 = 90,
+    
+    /// Important/flagged recording retention in days
+    important_days: u32 = 365,
+    
+    /// Cleanup priority order
+    cleanup_priority: [3]RecordingType = .{ .continuous, .events, .important },
+};
+
+/// Recording type for retention priority
+pub const RecordingType = enum {
+    continuous,
+    events,
+    important,
+};
+
+/// Storage statistics
+pub const StorageStats = struct {
+    total_bytes: u64,
+    used_bytes: u64,
+    free_bytes: u64,
+    recordings_bytes: u64,
+    recording_count: u64,
+    write_speed_mbps: f32,
+    health_status: StorageHealth,
+};
+
+/// Storage health status
+pub const StorageHealth = enum {
+    healthy,
+    warning,
+    critical,
+    unknown,
 };
 
 /// Advanced detection capabilities
