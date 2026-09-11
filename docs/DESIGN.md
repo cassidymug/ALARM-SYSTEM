@@ -373,3 +373,56 @@ Also configured at setup (and editable later with care):
 - `guardian-ui` package is a Zig application; web static UI is deferred or removed in favor of the Zig panel for the appliance.
 
 Remote clients may later reuse the same Zig codebase or a thin Zig remote viewing client talking through `guardian-relay`.
+
+## Security controls
+
+Priority controls for reducing vulnerability and blast radius on the Guardian appliance + Hetzner relay. These are design requirements, not optional polish.
+
+### Attack-surface reduction
+
+- **Outbound-only hub:** no inbound ports from the internet; the hub initiates connections to `guardian-relay` only.
+- **Minimal Debian image:** no desktop environment, no unused packages, no compilers/toolchains on production images.
+- **Zig UI + minimal dependencies:** no Electron/React/Flutter; prefer Zig stdlib + Linux OS APIs. Any media/WebRTC helper is an explicit, documented exception (pinned/vendored), not silent dependency sprawl.
+- **Camera network isolation:** cameras on a dedicated VLAN/subnet reachable by the hub; phones and laptops must not sit on that segment.
+- **Cameras:** disable vendor cloud/UPnP; local RTSP only; unique strong credentials; firmware updates owned as an ops chore.
+- **Do not** expose the Zig UI or `guardian-api` on the public internet. Remote access is only via the authenticated relay.
+
+### Authentication & keys
+
+- **mTLS** between hub (`guardian-gateway`) and relay, with per-site device certificates.
+- App sessions use **short-lived tokens**; revoke compromised devices without rotating the whole site when possible.
+- **Arm/disarm:** PIN with rate limiting and lockout; consider a second factor for remote arm/disarm.
+- **Key separation:** site identity ≠ backup encryption key ≠ relay admin credentials. Compromise of the Hetzner VPS must not yield plaintext offsite video.
+- Backup uses **client-side encryption** (age/sodium); recovery key printed at setup and never stored in plaintext in the cloud.
+
+### Process isolation (systemd)
+
+Each Guardian daemon runs as its own service user with a tight unit, including at minimum:
+
+- `ProtectSystem=strict`
+- `PrivateTmp=yes`
+- `NoNewPrivileges=yes`
+- Narrow `CapabilityBoundingSet` / `RestrictAddressFamilies`
+- Only the sockets, device nodes, and directories that service requires
+
+Hostile-input assumption for RTSP, Zigbee/sensor frames, and WebRTC signaling: length limits, timeouts, no shelling out with untrusted URLs.
+
+### Supply chain
+
+- Vendor or pin every allowed dependency; prefer reproducible builds for `.deb` packages and the Zig UI.
+- Signed private apt (or image) updates; no `curl | bash` on the appliance.
+- Maintain an SBOM for the appliance image; scan for CVEs on a cadence.
+- Updates must be **signed** and support **rollback** so a bad update cannot brick alarming.
+
+### Operations & runtime
+
+- UPS for hub + PoE switch; **disk encryption** for the media volume (NUC theft scenario).
+- Append-only local **audit log** for arm/disarm, relay sessions, and backup restores; optional encrypted summaries offsite.
+- Relay heartbeat / “site dark” alerting when the hub stops checking in.
+- Hetzner: firewall allows **443 only** to the relay; storage credentials scoped to a single bucket; SSH via keys only (no password auth); optional admin VPN.
+
+### Explicit non-goals (early)
+
+- Public Zig UI or API endpoints “for convenience.”
+- Continuous plaintext video stored in the cloud.
+- Shared passwords across cameras, hub, and developer accounts.
