@@ -16,6 +16,10 @@ pub fn build(b: *std.Build) void {
     });
     exe.root_module.addImport("guardian-common", common_mod);
 
+    // Link SDL2
+    exe.linkSystemLibrary("SDL2");
+    exe.linkLibC();
+
     b.installArtifact(exe);
 
     const run_cmd = b.addRunArtifact(exe);
