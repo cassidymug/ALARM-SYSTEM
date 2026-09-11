@@ -1,0 +1,47 @@
+[Unit]
+Description=Guardian Recorder - Continuous video+audio recording
+Documentation=https://github.com/guardian-dvr/guardian
+After=network-online.target guardian-common.target
+Wants=network-online.target
+PartOf=guardian.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/guardian-recorder
+Restart=on-failure
+RestartSec=5s
+User=guardian-recorder
+Group=guardian
+
+# Security hardening
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=no
+NoNewPrivileges=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+SystemCallArchitectures=native
+
+# Capability restrictions
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+# Directories
+ReadOnlyPaths=/
+ReadWritePaths=/srv/guardian/recordings /var/lib/guardian/events
+ConfigurationDirectory=guardian
+StateDirectory=guardian
+LogsDirectory=guardian
+
+[Install]
+WantedBy=guardian.target

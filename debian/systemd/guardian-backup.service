@@ -1,0 +1,43 @@
+[Unit]
+Description=Guardian Backup - Encrypted offsite backup
+Documentation=https://github.com/guardian-dvr/guardian
+After=network-online.target guardian-recorder.service
+Wants=network-online.target
+PartOf=guardian.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/guardian-backup
+Restart=on-failure
+RestartSec=60s
+User=guardian-backup
+Group=guardian
+
+# Security hardening
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+NoNewPrivileges=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+ReadOnlyPaths=/
+ReadWritePaths=/srv/guardian/backup-staging /var/lib/guardian
+ConfigurationDirectory=guardian
+StateDirectory=guardian
+LogsDirectory=guardian
+
+[Install]
+WantedBy=guardian.target

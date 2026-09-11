@@ -1,0 +1,42 @@
+#!/bin/bash
+# mkosi.postinst - Post-installation script for Guardian appliance
+set -euo pipefail
+
+echo "Guardian appliance post-install setup"
+
+# Create guardian group and service users
+groupadd -r guardian 2>/dev/null || true
+
+for service in recorder detect alarm sensors api intercom gateway backup ui; do
+    useradd -r -g guardian -s /usr/sbin/nologin -c "Guardian $service service" "guardian-$service" 2>/dev/null || true
+done
+
+# Create directory structure
+mkdir -p /etc/guardian/certs
+mkdir -p /var/lib/guardian/events
+mkdir -p /srv/guardian/recordings
+mkdir -p /srv/guardian/backup-staging
+mkdir -p /var/log/guardian
+
+# Set ownership
+chown -R root:guardian /etc/guardian
+chmod 750 /etc/guardian
+chmod 750 /etc/guardian/certs
+
+chown -R guardian-recorder:guardian /srv/guardian/recordings
+chmod 755 /srv/guardian/recordings
+
+chown -R guardian-backup:guardian /srv/guardian/backup-staging
+chmod 755 /srv/guardian/backup-staging
+
+chown -R root:guardian /var/lib/guardian
+chmod 775 /var/lib/guardian
+
+# Install systemd units
+mkdir -p /etc/systemd/system
+# Systemd units will be installed by .deb packages
+
+# Enable guardian.target (but individual services remain disabled until setup)
+systemctl enable guardian.target || true
+
+echo "Guardian appliance post-install complete"

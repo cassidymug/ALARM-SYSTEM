@@ -1,0 +1,46 @@
+[Unit]
+Description=Guardian Gateway - Outbound relay client
+Documentation=https://github.com/guardian-dvr/guardian
+After=network-online.target guardian-api.service
+Wants=network-online.target
+PartOf=guardian.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/guardian-gateway
+Restart=on-failure
+RestartSec=10s
+User=guardian-gateway
+Group=guardian
+
+# Security hardening
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+NoNewPrivileges=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+SystemCallArchitectures=native
+
+# Capability restrictions
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+# Directories
+ReadOnlyPaths=/
+ReadWritePaths=/var/lib/guardian
+ConfigurationDirectory=guardian
+StateDirectory=guardian
+LogsDirectory=guardian
+
+[Install]
+WantedBy=guardian.target

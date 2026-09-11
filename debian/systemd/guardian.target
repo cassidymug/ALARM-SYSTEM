@@ -1,0 +1,8 @@
+[Unit]
+Description=Guardian System Target
+Documentation=https://github.com/guardian-dvr/guardian
+Wants=guardian-recorder.service guardian-detect.service guardian-alarm.service guardian-sensors.service guardian-api.service guardian-intercom.service guardian-gateway.service guardian-backup.service guardian-ui.service
+After=network-online.target
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,23 @@
+.{
+    .name = "guardian",
+    .version = "0.1.0",
+    .minimum_zig_version = "0.13.0",
+    
+    .dependencies = .{
+        .@"guardian-common" = .{ .path = "services/common" },
+    },
+    
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "services",
+        "ui",
+        "os",
+        "debian",
+        "configs",
+        "deploy",
+        "docs",
+        "README.md",
+        "LICENSE",
+    },
+}

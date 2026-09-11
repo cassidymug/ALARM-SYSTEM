@@ -1,0 +1,42 @@
+[Unit]
+Description=Guardian Relay Server
+Documentation=https://github.com/guardian-dvr/guardian
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/guardian-relay
+Restart=on-failure
+RestartSec=10s
+User=guardian-relay
+Group=guardian-relay
+
+# Security hardening
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+# Directories
+ReadOnlyPaths=/
+ReadWritePaths=/var/lib/guardian-relay
+StateDirectory=guardian-relay
+ConfigurationDirectory=guardian-relay
+LogsDirectory=guardian-relay
+
+# Environment
+Environment=RELAY_LISTEN_ADDR=:8443
+
+[Install]
+WantedBy=multi-user.target
