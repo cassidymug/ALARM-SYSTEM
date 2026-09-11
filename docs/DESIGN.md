@@ -359,3 +359,17 @@ Also configured at setup (and editable later with care):
 ---
 
 *End of design document. Locked decisions in the project brief take precedence over any conflicting older notes.*
+
+---
+
+## Addendum — UI language & dependencies (2026-09-11)
+
+**Locked:** The system UI is implemented in **Zig**, with a minimal-dependency policy:
+
+- No Electron, React, Flutter, or similar UI frameworks.
+- Prefer Zig standard library + Linux OS APIs (DRM/KMS or Wayland, sockets to `guardian-api`).
+- No third-party NVR/alarm products; own the UX and IPC.
+- Media decode / WebRTC: treat any external library or helper process (e.g. ffmpeg subprocess) as an **explicit exception** documented in this design — not a silent dependency sprawl.
+- `guardian-ui` package is a Zig application; web static UI is deferred or removed in favor of the Zig panel for the appliance.
+
+Remote clients may later reuse the same Zig codebase or a thin Zig remote viewing client talking through `guardian-relay`.
