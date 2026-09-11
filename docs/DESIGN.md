@@ -426,3 +426,16 @@ Hostile-input assumption for RTSP, Zigbee/sensor frames, and WebRTC signaling: l
 - Public Zig UI or API endpoints “for convenience.”
 - Continuous plaintext video stored in the cloud.
 - Shared passwords across cameras, hub, and developer accounts.
+
+---
+
+## Addendum — Recording resolution (2026-09-11)
+
+**Locked:** `guardian-recorder` must support ingest and retention of **4K (2160p)** and **8K (4320p)** streams, in addition to Full HD.
+
+Design implications:
+- Prefer cameras that offer RTSP main + substream; record main at configured max resolution; use substream for remote grids / detect when needed.
+- At 8–16 cameras, continuous **8K on every camera** is usually impractical (disk, PoE/switch, CPU/GPU, uplink). Architecture must allow **per-camera max resolution** and profiles (e.g. gate/door 4K, overview 1080p, optional 8K on select cams).
+- Hub sizing: hardware video encode/decode (Quick Sync / NVENC / VCN) strongly preferred for multi-4K; 8K limited to few concurrent streams unless the NUC-class box is upgraded.
+- Storage/bitrate planning and retention UI must surface estimated disk use when 4K/8K is enabled.
+- BOM and live-view defaults still use substreams remotely; tap-to-HD becomes tap-to-configured-max (4K/8K when selected and uplink allows).
