@@ -34,7 +34,12 @@ chmod 775 /var/lib/guardian
 
 # Install systemd units
 mkdir -p /etc/systemd/system
-# Systemd units will be installed by .deb packages
+# Systemd units should be installed by:
+#   1. .deb packages (preferred), OR
+#   2. Manual copy from software/debian/systemd/ to /etc/systemd/system/
+#
+# Units reference binaries at /usr/bin/guardian-*
+# See software/os/README.md for post-boot setup instructions
 
 # Enable guardian.target (but individual services remain disabled until setup)
 systemctl enable guardian.target || true
