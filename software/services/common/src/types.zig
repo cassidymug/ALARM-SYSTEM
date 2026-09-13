@@ -66,10 +66,17 @@ pub const ZoneConfig = struct {
     id: []const u8,
     name: []const u8,
     zone_type: ZoneType,
+    sensor_type: SensorType,
     sensor_bindings: []const []const u8,
     bypass_enabled: bool = false,
     chime_enabled: bool = false,
     entry_delay_ms: ?u64 = null,
+    
+    /// Thresholds for analog sensors
+    thresholds: ?SensorThresholds = null,
+    
+    /// Actions to take on sensor events
+    actions: ?SensorActions = null,
 };
 
 pub const ZoneType = enum {
@@ -78,6 +85,73 @@ pub const ZoneType = enum {
     @"24h",
     fire,
     panic,
+};
+
+/// Sensor type definitions
+pub const SensorType = enum {
+    /// Contact sensors
+    door_window,      // Standard contact sensor
+    glass_break,      // Acoustic glass break detector
+    panic_button,     // Manual panic/duress button
+    tamper,          // Tamper switch
+    
+    /// Motion sensors
+    pir_motion,      // Passive infrared motion detector
+    dual_tech,       // PIR + microwave
+    
+    /// Life safety
+    smoke_detector,       // Smoke/fire detector
+    heat_detector,        // Fixed/rate-of-rise heat
+    co_detector,          // Carbon monoxide
+    gas_detector,         // Natural gas/propane
+    water_leak,           // Water leak detector
+    
+    /// Environmental
+    temperature,          // Temperature sensor
+    humidity,             // Humidity sensor
+    freeze,              // Freeze sensor (pipes)
+    
+    /// Perimeter
+    beam_sensor,         // Photoelectric beam
+    vibration,           // Vibration/shock sensor
+    metal_detector,      // Walk-through metal detector
+    
+    /// Custom
+    analog_custom,       // Custom analog sensor
+    digital_custom,      // Custom digital sensor
+};
+
+/// Sensor thresholds for analog sensors
+pub const SensorThresholds = struct {
+    warning: ?f32 = null,
+    critical: ?f32 = null,
+    shutdown: ?f32 = null,
+    
+    /// For multi-level sensors (CO, gas)
+    danger: ?f32 = null,
+    extreme: ?f32 = null,
+};
+
+/// Actions to perform on sensor events
+pub const SensorActions = struct {
+    on_warning: []const Action = &.{},
+    on_critical: []const Action = &.{},
+    on_alarm: []const Action = &.{},
+};
+
+pub const Action = enum {
+    notify,
+    alarm,
+    call_fire_dept,
+    call_police,
+    snapshot_camera,
+    start_recording,
+    activate_siren,
+    activate_strobe,
+    unlock_doors,
+    shut_down_hvac,
+    turn_on_lights,
+    evacuate,
 };
 
 /// Alarm system state
