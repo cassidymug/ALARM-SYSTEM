@@ -459,3 +459,16 @@ Design implications:
 ### Software impact
 - Prefer `guardian-sensors` drivers for wired expanders over Zigbee2MQTT-style stacks
 - Camera VLAN remains Ethernet-only
+
+## Addendum — OEM vs custom hardware strategy (2026-09-13)
+
+**Goal:** Reduce known and unknown vulnerabilities by owning the alarm/DVR stack (Zig) and keeping the hub edge **wired-only**.
+
+**Zig rationale:** Systems language with fewer dependencies and a smaller “commodity IoT” ecosystem than typical C/C++/vendor SDKs for this product class. Treated as defense-in-depth (memory discipline + less copy-paste firmware), not as security-through-obscurity alone.
+
+**Phase strategy:**
+1. **OEM wired parts** for lab/MVP: PoE RTSP cameras, managed PoE switch, Ethernet/USB dry-contact DI/DO expanders, hard-wired contacts/PIR/siren.
+2. **Custom zone expander** (next hardware design): our protocol + supervised zones + siren/relay — replace open industrial Modbus where trust matters.
+3. **Custom door station / camera** only if OEM video firmware trust is unacceptable (higher cost/time).
+
+Phones may use wireless networks only to reach the cloud relay, never as hub-edge sensors/cameras.
