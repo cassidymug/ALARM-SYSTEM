@@ -1,0 +1,43 @@
+[Unit]
+Description=Guardian UI - Appliance interface
+Documentation=https://github.com/guardian-dvr/guardian
+After=guardian-api.service
+Requires=guardian-api.service
+PartOf=guardian.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/guardian-ui
+Restart=on-failure
+RestartSec=5s
+User=guardian-ui
+Group=guardian
+Environment=XDG_RUNTIME_DIR=/run/guardian-ui
+
+# Need access to DRM/KMS or Wayland
+SupplementaryGroups=video input
+
+# Security hardening (relaxed for display access)
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+NoNewPrivileges=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+# Directories
+ReadOnlyPaths=/
+ConfigurationDirectory=guardian
+RuntimeDirectory=guardian-ui
+LogsDirectory=guardian
+
+[Install]
+WantedBy=guardian.target

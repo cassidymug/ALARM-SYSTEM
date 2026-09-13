@@ -1,0 +1,40 @@
+[Unit]
+Description=Guardian Intercom - Two-way audio for gate/door stations
+Documentation=https://github.com/guardian-dvr/guardian
+After=guardian-api.service
+PartOf=guardian.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/guardian-intercom
+Restart=on-failure
+RestartSec=5s
+User=guardian-intercom
+Group=guardian
+
+# Security hardening
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+NoNewPrivileges=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+ConfigurationDirectory=guardian
+StateDirectory=guardian
+LogsDirectory=guardian
+
+[Install]
+WantedBy=guardian.target

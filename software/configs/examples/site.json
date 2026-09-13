@@ -1,0 +1,148 @@
+{
+  "site_name": "Home Security System",
+  "site_id": "site_12345",
+  "cameras": [
+    {
+      "id": "cam_front_gate",
+      "name": "Front Gate",
+      "rtsp_url": "rtsp://192.168.1.100:554/stream1",
+      "rtsp_substream_url": "rtsp://192.168.1.100:554/stream2",
+      "max_resolution": "uhd_4k",
+      "audio_enabled": true,
+      "detect_enabled": true,
+      "intercom_enabled": true,
+      "notes": "Gate station with two-way audio, 4K main + substream"
+    },
+    {
+      "id": "cam_front_door",
+      "name": "Front Door",
+      "rtsp_url": "rtsp://192.168.1.101:554/stream1",
+      "rtsp_substream_url": "rtsp://192.168.1.101:554/stream2",
+      "max_resolution": "uhd_4k",
+      "audio_enabled": true,
+      "detect_enabled": true,
+      "intercom_enabled": true,
+      "notes": "Door station with two-way audio"
+    },
+    {
+      "id": "cam_driveway",
+      "name": "Driveway",
+      "rtsp_url": "rtsp://192.168.1.102:554/stream1",
+      "rtsp_substream_url": "rtsp://192.168.1.102:554/stream2",
+      "max_resolution": "full_hd",
+      "audio_enabled": true,
+      "detect_enabled": true,
+      "intercom_enabled": false,
+      "notes": "Standard HD camera"
+    },
+    {
+      "id": "cam_backyard",
+      "name": "Backyard",
+      "rtsp_url": "rtsp://192.168.1.103:554/stream1",
+      "rtsp_substream_url": "rtsp://192.168.1.103:554/stream2",
+      "max_resolution": "full_hd",
+      "audio_enabled": true,
+      "detect_enabled": true,
+      "intercom_enabled": false
+    },
+    {
+      "id": "cam_garage",
+      "name": "Garage",
+      "rtsp_url": "rtsp://192.168.1.104:554/stream1",
+      "rtsp_substream_url": "rtsp://192.168.1.104:554/stream2",
+      "max_resolution": "full_hd",
+      "audio_enabled": false,
+      "detect_enabled": true,
+      "intercom_enabled": false
+    },
+    {
+      "id": "cam_side_yard",
+      "name": "Side Yard",
+      "rtsp_url": "rtsp://192.168.1.105:554/stream1",
+      "rtsp_substream_url": "rtsp://192.168.1.105:554/stream2",
+      "max_resolution": "full_hd",
+      "audio_enabled": false,
+      "detect_enabled": true,
+      "intercom_enabled": false
+    },
+    {
+      "id": "cam_rear_perimeter",
+      "name": "Rear Perimeter",
+      "rtsp_url": "rtsp://192.168.1.106:554/stream1",
+      "rtsp_substream_url": "rtsp://192.168.1.106:554/stream2",
+      "max_resolution": "uhd_8k",
+      "audio_enabled": false,
+      "detect_enabled": true,
+      "intercom_enabled": false,
+      "notes": "8K overview camera - requires hardware encoding"
+    }
+  ],
+  "zones": [
+    {
+      "id": "zone_front_door",
+      "name": "Front Door",
+      "zone_type": "perimeter",
+      "sensor_bindings": ["sensor_front_door"],
+      "bypass_enabled": false,
+      "chime_enabled": true,
+      "entry_delay_ms": 30000,
+      "notes": "Entry zone with 30s delay"
+    },
+    {
+      "id": "zone_back_door",
+      "name": "Back Door",
+      "zone_type": "perimeter",
+      "sensor_bindings": ["sensor_back_door"],
+      "bypass_enabled": false,
+      "chime_enabled": true,
+      "entry_delay_ms": 30000
+    },
+    {
+      "id": "zone_garage_door",
+      "name": "Garage Door",
+      "zone_type": "perimeter",
+      "sensor_bindings": ["sensor_garage_door"],
+      "bypass_enabled": false,
+      "chime_enabled": true,
+      "entry_delay_ms": 30000
+    },
+    {
+      "id": "zone_living_room",
+      "name": "Living Room PIR",
+      "zone_type": "interior",
+      "sensor_bindings": ["sensor_living_pir"],
+      "bypass_enabled": false,
+      "chime_enabled": false,
+      "notes": "Interior zone, bypassed in stay mode"
+    },
+    {
+      "id": "zone_hallway",
+      "name": "Hallway PIR",
+      "zone_type": "interior",
+      "sensor_bindings": ["sensor_hallway_pir"],
+      "bypass_enabled": false,
+      "chime_enabled": false
+    },
+    {
+      "id": "zone_master_bedroom",
+      "name": "Master Bedroom",
+      "zone_type": "interior",
+      "sensor_bindings": ["sensor_master_window_1", "sensor_master_window_2"],
+      "bypass_enabled": false,
+      "chime_enabled": false
+    },
+    {
+      "id": "zone_panic",
+      "name": "Panic Button",
+      "zone_type": "panic",
+      "sensor_bindings": ["sensor_panic_button"],
+      "bypass_enabled": false,
+      "chime_enabled": false,
+      "notes": "24h zone, always active"
+    }
+  ],
+  "relay_url": "wss://relay.guardian.example.com",
+  "backup_scope": "events_plus_rolling",
+  "backup_retention_days": 30,
+  "backup_bandwidth_cap_mbps": 20
+}

@@ -1,0 +1,46 @@
+[Unit]
+Description=Guardian API Server - Local REST/gRPC interface
+Documentation=https://github.com/guardian-dvr/guardian
+After=network.target guardian-common.target
+PartOf=guardian.target
+Before=guardian-ui.service guardian-gateway.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/guardian-api
+Restart=on-failure
+RestartSec=5s
+User=guardian-api
+Group=guardian
+
+# Security hardening
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+NoNewPrivileges=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+SystemCallArchitectures=native
+
+# Capability restrictions
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+# Directories
+ReadOnlyPaths=/
+ReadWritePaths=/var/lib/guardian
+ConfigurationDirectory=guardian
+StateDirectory=guardian
+LogsDirectory=guardian
+
+[Install]
+WantedBy=guardian.target

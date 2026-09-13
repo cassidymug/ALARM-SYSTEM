@@ -1,0 +1,47 @@
+[Unit]
+Description=Guardian Alarm System - State machine and zone management
+Documentation=https://github.com/guardian-dvr/guardian
+After=network.target guardian-common.target guardian-sensors.service
+Wants=guardian-sensors.service
+PartOf=guardian.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/guardian-alarm
+Restart=on-failure
+RestartSec=5s
+User=guardian-alarm
+Group=guardian
+
+# Security hardening
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+NoNewPrivileges=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+SystemCallArchitectures=native
+
+# Capability restrictions
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+# Directories
+ReadOnlyPaths=/
+ReadWritePaths=/var/lib/guardian
+ConfigurationDirectory=guardian
+StateDirectory=guardian
+LogsDirectory=guardian
+
+[Install]
+WantedBy=guardian.target

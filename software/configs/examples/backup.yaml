@@ -1,0 +1,44 @@
+# Guardian Backup Configuration
+
+## Scope options
+
+backup_scope: events_plus_rolling  # Options: events_only, events_plus_rolling, full_continuous
+
+## Retention
+backup_retention_days: 30
+backup_retention_gb_cap: 500  # Optional hard cap in GB
+
+## Upload bandwidth
+# Protect household uplink from saturation
+backup_bandwidth_cap_mbps: 20  # Mbps
+
+## Encryption
+# Client-side encryption before upload (age/sodium)
+encryption_enabled: true
+recovery_key_file: /var/lib/guardian/recovery_key.txt  # NEVER upload to cloud
+
+## Destination
+destination_type: hetzner_object_storage  # Options: hetzner_object_storage, hetzner_storage_box
+bucket_name: guardian-backups-prod
+endpoint: https://fsn1.your-objectstorage.com
+access_key_id: YOUR_ACCESS_KEY
+secret_access_key: YOUR_SECRET_KEY
+
+## Upload schedule
+# Continuous with bandwidth cap, or scheduled windows
+upload_mode: continuous  # Options: continuous, scheduled
+# If scheduled:
+# upload_windows:
+#   - start: "02:00"
+#     end: "06:00"
+
+## Verification
+verify_uploaded: true
+verify_interval_days: 7
+
+## Notes
+# - Recovery key is generated at setup and shown once
+# - User must store recovery key offline
+# - Without recovery key, backup data is unrecoverable
+# - Hetzner stores ciphertext only
+# - Object Storage preferred over Storage Box for better API support
