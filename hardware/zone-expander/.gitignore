@@ -1,0 +1,29 @@
+# KiCad backup files
+*-backups/
+*-backup/
+_autosave-*
+*.kicad_prl
+
+# KiCad lock files
+*.lck
+*.lock
+\#auto_saved_files\#
+
+# KiCad cache files
+*-cache.lib
+*.bck
+*.bak
+
+# Gerber output (commit only final release gerbers)
+/gerbers/*
+!/gerbers/README.md
+
+# BOM output (temporary, regenerate from schematic)
+*.xml
+*.csv.bak
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*~

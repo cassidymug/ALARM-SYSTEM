@@ -1,0 +1,40 @@
+# Guardian DIY Alarm System - Git Ignore
+
+# KiCad backup and temporary files
+*-backups/
+*-backup/
+_autosave-*
+*.kicad_prl
+*.lck
+*.lock
+\#auto_saved_files\#
+*-cache.lib
+*.bck
+*.bak
+
+# OS files
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Build artifacts (future)
+*.o
+*.a
+*.so
+*.dll
+*.exe
+/build/
+/dist/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.sublime-*
+
+# Logs
+*.log
+
+# Temporary files
+/tmp/
+*.tmp

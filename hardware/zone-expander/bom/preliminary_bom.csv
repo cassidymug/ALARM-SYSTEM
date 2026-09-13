@@ -1,0 +1,92 @@
+Reference,Quantity,Value,Description,Footprint,MPN,Notes
+# Power Supply (Sheet: Power)
+J1,1,Barrel_Jack,DC Power Jack 2.1mm 12V,BarrelJack_Horizontal,PJ-202A,Center positive
+F1,1,2A,Fuse 2A slow-blow,Fuse_Holder_5x20mm,0229002.MXP,Input protection
+D1,1,P-FET or Schottky,Reverse polarity protection,SOT-23 or D_SMA,AO3401 or SS34,Choose P-FET for low Vdrop
+U1,1,TPS54331,Buck converter 12V→3.3V 3A,SOIC-8_3.9x4.9mm_P1.27mm,TPS54331DR,Texas Instruments
+L1,1,22µH,Inductor 22µH 1.5A,L_12x12mm,IHLP2525CZER220M11,Vishay shielded
+C1,1,220µF,Cap electrolytic 25V (input),CP_Radial_D8.0mm_P3.50mm,ECA-1EM221,Panasonic
+C2,1,220µF,Cap electrolytic 25V (output),CP_Radial_D8.0mm_P3.50mm,ECA-1EM221,Panasonic
+C3-C10,8,100nF,Cap ceramic X7R 0805,C_0805_2012Metric,,Decoupling (distribute across sheets)
+C11,1,10µF,Cap ceramic X7R 1206,C_1206_3216Metric,,Bulk 3.3V rail
+C12,1,10µF,Cap ceramic X7R 1206,C_1206_3216Metric,,Bulk 3.3V rail
+R1,1,10kΩ,Resistor 1% 0805 (buck feedback),R_0805_2012Metric,,Per TPS54331 datasheet
+R2,1,2.2kΩ,Resistor 1% 0805 (buck feedback),R_0805_2012Metric,,Per TPS54331 datasheet
+D2,1,1N5819,Schottky diode 1A 40V,D_SMA,1N5819,Buck flyback (if not integrated)
+TP1,1,TestPoint,Test point +12V,TestPoint_Pad_D2.0mm,,
+TP2,1,TestPoint,Test point +3.3V,TestPoint_Pad_D2.0mm,,
+TP3,1,TestPoint,Test point GND,TestPoint_Pad_D2.0mm,,
+# MCU (Sheet: MCU)
+U2,1,STM32G071CBT6,MCU STM32G0 48-pin LQFP,LQFP-48_7x7mm_P0.5mm,STM32G071CBT6,STMicroelectronics (or STM32G431CBT6)
+Y1,1,8MHz,Crystal 8MHz HC-49S,Crystal_HC49-U_Vertical,ABM3B-8.000MHZ-B2-T,HSE for MCU
+C20,1,20pF,Cap ceramic 0805 (crystal load),C_0805_2012Metric,,
+C21,1,20pF,Cap ceramic 0805 (crystal load),C_0805_2012Metric,,
+R10,1,10kΩ,Resistor 0805 (NRST pull-up),R_0805_2012Metric,,
+C22-C30,9,100nF,Cap ceramic X7R 0805,C_0805_2012Metric,,One per VDD/VDDA pin
+C31,1,10µF,Cap ceramic X7R 1206,C_1206_3216Metric,,MCU bulk
+C32,1,10µF,Cap ceramic X7R 1206,C_1206_3216Metric,,MCU bulk
+J2,1,SWD_Header,Header 2×5 1.27mm SWD,PinHeader_2x05_P1.27mm,TC2050-IDC-NL (or standard),Tag-Connect or pin header
+J3,1,UART_Header,Header 1×3 2.54mm (TX RX GND),PinHeader_1x03_P2.54mm_Vertical,,
+SW1,1,SW_Push,Tactile switch SPST 6mm (NRST),SW_SPST_6mm,,Reset button
+R11,1,0Ω,Resistor 0805 (BOOT0 to GND),R_0805_2012Metric,,Flash boot mode
+# Ethernet (Sheet: Ethernet)
+U3,1,W5500,Ethernet controller SPI,LQFP-48_7x7mm_P0.5mm,W5500,WIZnet
+J4,1,RJ45_MagJack,RJ45 connector with magnetics,RJ45_Hanrun_HR911105A,HR911105A,Hanrun or Abracon ARJP11A
+C40-C47,8,100nF,Cap ceramic X7R 0805,C_0805_2012Metric,,W5500 decoupling
+C48,1,10µF,Cap ceramic X7R 1206,C_1206_3216Metric,,W5500 bulk
+C49,1,10µF,Cap ceramic X7R 1206,C_1206_3216Metric,,W5500 bulk
+R20,1,12.4kΩ,Resistor 1% 0805 (W5500 RSET),R_0805_2012Metric,,Mode reference resistor
+R21,1,49.9Ω,Resistor 1% 0805 (ETH termination),R_0805_2012Metric,,Optional TX series
+R22,1,49.9Ω,Resistor 1% 0805 (ETH termination),R_0805_2012Metric,,Optional TX series
+D10-D13,4,SP0503BAHT,TVS diode array Ethernet ESD,SOT-143,SP0503BAHT,Littelfuse or equivalent
+LED1,1,LED_Green,LED 0805 SMD (Link),LED_0805_2012Metric,,Link indicator
+LED2,1,LED_Yellow,LED 0805 SMD (Activity),LED_0805_2012Metric,,Activity indicator
+R23,1,330Ω,Resistor 0805 (LED current limit),R_0805_2012Metric,,
+R24,1,330Ω,Resistor 0805 (LED current limit),R_0805_2012Metric,,
+# Zone Bank 1 (Zones 1-8)
+J10-J17,8,Screw_Term_2pos,Screw terminal 2-pos 3.5mm (ZONE+/−),TerminalBlock_Phoenix_MKDS-1.5-2,1757242,Phoenix or equivalent
+R100-R107,8,10kΩ,Resistor 0805 (zone pull-up),R_0805_2012Metric,,One per zone
+D100-D107,8,SMAJ5.0CA,TVS diode bidirectional 5V,D_SOD-123,SMAJ5.0CA,Littelfuse
+F10,1,100mA,PTC fuse 100mA 1206,R_1206_3216Metric,MF-R090,Optional per bank protection
+# Zone Bank 2 (Zones 9-16)
+J20-J27,8,Screw_Term_2pos,Screw terminal 2-pos 3.5mm,TerminalBlock_Phoenix_MKDS-1.5-2,1757242,
+R200-R207,8,10kΩ,Resistor 0805,R_0805_2012Metric,,
+D200-D207,8,SMAJ5.0CA,TVS diode bidirectional 5V,D_SOD-123,SMAJ5.0CA,
+F11,1,100mA,PTC fuse 100mA 1206,R_1206_3316Metric,MF-R090,
+# Zone Bank 3 (Zones 17-24)
+J30-J37,8,Screw_Term_2pos,Screw terminal 2-pos 3.5mm,TerminalBlock_Phoenix_MKDS-1.5-2,1757242,
+R300-R307,8,10kΩ,Resistor 0805,R_0805_2012Metric,,
+D300-D307,8,SMAJ5.0CA,TVS diode bidirectional 5V,D_SOD-123,SMAJ5.0CA,
+F12,1,100mA,PTC fuse 100mA 1206,R_1206_3216Metric,MF-R090,
+# Zone Bank 4 (Zones 25-32)
+J40-J47,8,Screw_Term_2pos,Screw terminal 2-pos 3.5mm,TerminalBlock_Phoenix_MKDS-1.5-2,1757242,
+R400-R407,8,10kΩ,Resistor 0805,R_0805_2012Metric,,
+D400-D407,8,SMAJ5.0CA,TVS diode bidirectional 5V,D_SOD-123,SMAJ5.0CA,
+F13,1,100mA,PTC fuse 100mA 1206,R_1206_3216Metric,MF-R090,
+# (EOL resistors 4.7kΩ - USER SUPPLIED - not on PCB)
+# Outputs (Sheet: Outputs)
+Q1,1,IRLZ44N,N-MOSFET logic-level TO-220 (siren),TO-220-3_Vertical,IRLZ44N,Or AO3400 SOT-23
+R30,1,10kΩ,Resistor 0805 (gate pull-down),R_0805_2012Metric,,
+R31,1,100Ω,Resistor 0805 (gate series),R_0805_2012Metric,,
+D20,1,1N5819,Diode Schottky 1A (flyback),D_SMA,1N5819,
+J50,1,Screw_Term_2pos,Screw terminal 2-pos 5mm (12V_SIREN GND),TerminalBlock_Phoenix_MKDS-1.5-2_5mm,,
+K1,1,Relay_SPDT,Relay SPDT 5A 250VAC (Relay 1),Relay_SPDT_Omron-G5V-2,G5V-2-DC5,Omron 5V coil
+K2,1,Relay_SPDT,Relay SPDT 5A 250VAC (Relay 2),Relay_SPDT_Omron-G5V-2,G5V-2-DC5,
+Q10,1,2N2222,NPN transistor SOT-23 (relay driver),SOT-23,2N2222 or BC817,
+Q11,1,2N2222,NPN transistor SOT-23 (relay driver),SOT-23,2N2222 or BC817,
+R40,1,1kΩ,Resistor 0805 (base resistor),R_0805_2012Metric,,
+R41,1,1kΩ,Resistor 0805 (base resistor),R_0805_2012Metric,,
+D21,1,1N4148,Diode 1A (relay coil flyback),D_SMA,1N4148,
+D22,1,1N4148,Diode 1A (relay coil flyback),D_SMA,1N4148,
+J51,1,Screw_Term_3pos,Screw terminal 3-pos 5mm (NO COM NC),TerminalBlock_Phoenix_MKDS-1.5-3_5mm,,Relay 1 contacts
+J52,1,Screw_Term_3pos,Screw terminal 3-pos 5mm (NO COM NC),TerminalBlock_Phoenix_MKDS-1.5-3_5mm,,Relay 2 contacts
+# Connectors & Status (Sheet: Connectors)
+LED10,1,LED_Red,LED 0805 SMD (Power indicator),LED_0805_2012Metric,,Always on
+R50,1,330Ω,Resistor 0805 (LED current limit),R_0805_2012Metric,,
+LED11,1,LED_Yellow,LED 0805 SMD (Status heartbeat),LED_0805_2012Metric,,GPIO-driven
+R51,1,330Ω,Resistor 0805 (LED current limit),R_0805_2012Metric,,
+SW2,1,SW_Push,Tactile switch SPST 6mm (user button),SW_SPST_6mm,,Optional test/enroll
+# Mechanical
+MH1-MH4,4,MountingHole,Mounting hole M3,MountingHole_3.2mm_M3,,Non-plated or GND
+# Additional test points (optional - add as needed during layout)
+TP10-TP20,11,TestPoint,Test points for critical nets,TestPoint_Pad_D2.0mm,,SPI SCK/MOSI/MISO zone ADC etc
