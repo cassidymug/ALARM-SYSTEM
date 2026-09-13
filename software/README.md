@@ -52,9 +52,11 @@ See `os/README.md` for appliance image build instructions.
 
 Guardian is a **wired-only, hub-edge architecture**:
 
-- **Hub**: This appliance (Debian, Zig services)
+- **Hub**: This appliance (Debian, Zig services, 16GB RAM standard)
 - **Edge devices**: PoE IP cameras, custom 32-zone wired alarm expander (GXP protocol)
 - **No wireless**: No Zigbee, Wi-Fi sensors, or wireless cameras at the hub
+
+**Hardware target**: 16GB RAM, quad-core x86-64/ARM64, 256GB+ SSD + large HDD for recordings
 
 Services communicate over local IPC (UNIX sockets + shared event bus). The `gateway` service handles remote relay (Hetzner) for mobile access.
 
