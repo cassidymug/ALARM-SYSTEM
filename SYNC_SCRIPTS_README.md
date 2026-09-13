@@ -4,7 +4,58 @@ This directory contains batch scripts to help you easily sync the latest hardwar
 
 ## 📥 Available Scripts
 
-### 1. `pull-latest.bat` — Quick Pull
+### PowerShell Scripts (Recommended for Windows 10/11)
+
+#### 1. `pull-latest.ps1` — Quick Pull (PowerShell)
+
+**Purpose:** Quickly pull the latest changes from the hardware design branch.
+
+**What it does:**
+- Fetches latest changes from origin
+- Switches to `cursor/zone-expander-kicad-skeleton-daa6` branch (if not already there)
+- Pulls all new files and updates
+- Shows a summary of what was updated
+- Lists available PDF/SVG files
+- Color-coded output with status indicators
+
+**Usage:**
+```powershell
+.\pull-latest.ps1
+```
+
+Or right-click → "Run with PowerShell"
+
+**Note:** You may need to enable script execution:
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+```
+
+#### 2. `sync-repo.ps1` — Advanced Menu (PowerShell)
+
+**Purpose:** Interactive menu with multiple sync and view options.
+
+**Features:**
+1. **Pull latest changes** (same as pull-latest.ps1)
+2. **Pull and view schematic PDF** (automatically opens zone-expander-complete.pdf)
+3. **Pull and view access control docs** (opens ACCESS_CONTROL_EXPANDER.md)
+4. **Pull and open schematics folder** (opens explorer to schematics-pdf/)
+5. **Show git status** (see current repository state)
+6. **Show recent commits** (view commit history)
+7. **Switch to different branch** (change branches interactively)
+0. **Exit**
+
+**Usage:**
+```powershell
+.\sync-repo.ps1
+```
+
+Navigate the menu by entering the number of your choice.
+
+---
+
+### Batch Scripts (Legacy, works on all Windows versions)
+
+#### 1. `pull-latest.bat` — Quick Pull
 
 **Purpose:** Quickly pull the latest changes from the hardware design branch.
 
@@ -59,6 +110,15 @@ Navigate the menu by entering the number of your choice.
 
 If you haven't cloned the repository yet:
 
+**PowerShell:**
+```powershell
+cd c:\dev
+git clone https://github.com/cassidymug/ALARM-SYSTEM.git "alarm system"
+cd "alarm system"
+.\pull-latest.ps1
+```
+
+**Command Prompt:**
 ```cmd
 cd c:\dev
 git clone https://github.com/cassidymug/ALARM-SYSTEM.git "alarm system"
@@ -70,6 +130,13 @@ pull-latest.bat
 
 To get the latest hardware designs:
 
+**PowerShell (Recommended):**
+```powershell
+cd "c:\dev\alarm system"
+.\pull-latest.ps1
+```
+
+**Command Prompt:**
 ```cmd
 cd "c:\dev\alarm system"
 pull-latest.bat
@@ -77,6 +144,13 @@ pull-latest.bat
 
 Or use the interactive menu:
 
+**PowerShell:**
+```powershell
+cd "c:\dev\alarm system"
+.\sync-repo.ps1
+```
+
+**Command Prompt:**
 ```cmd
 cd "c:\dev\alarm system"
 sync-repo.bat
