@@ -5,6 +5,9 @@
 **Prices:** Rough USD ballparks only — verify before purchase  
 **Owner:** Cassidy Mugadza  
 
+
+**Wired-only hard rule (2026-09-13):** No Wi-Fi cameras; no Zigbee/Z-Wave/wireless sensors at the hub. Cameras = PoE/Ethernet. Zones = hard-wired into an Ethernet/USB/GPIO expander. Siren/relays = wired.
+
 ---
 
 ## 1. Hub (appliance)
@@ -124,3 +127,22 @@ Ranges are wide on purpose (brand, wired vs wireless sensors, HDD vs NVMe, insta
 ---
 
 *BOM sized for 8–16 camera systems at a **12-cam midpoint**. Not a purchase authorization — engineering planning only.*
+
+---
+
+## Phase A — Wired lab kit (test while coding)
+
+| Item | Qty | Notes |
+|------|-----|-------|
+| Mini PC / NUC | 1 | Or reuse existing x86 box |
+| NVMe (OS) + media disk | 1+1 | Split OS vs recordings |
+| PoE+ switch (8-port OK for lab) | 1 | Gigabit |
+| PoE RTSP cameras with mic | 2–3 | **Ethernet only**; include 1× 4K if possible |
+| Cat6 patch leads | 4–6 | Bench |
+| Wired zone expander (Ethernet or USB) | 1 | Multi-input dry-contact board |
+| Hard-wired door contacts | 2–3 | To expander |
+| Hard-wired PIR | 1 | To expander |
+| Wired siren + PSU / relay module | 1 | Hub or expander driven |
+| Door/gate station (PoE, mic+speaker, RTSP) | 1 | Wired intercom prototype |
+
+**Do not buy for hub edge:** Zigbee sticks, Wi-Fi cams, wireless contact kits.
