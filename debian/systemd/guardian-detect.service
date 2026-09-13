@@ -1,0 +1,43 @@
+# Additional systemd units for remaining services
+
+[Unit]
+Description=Guardian Detect - Motion and object detection
+Documentation=https://github.com/guardian-dvr/guardian
+After=guardian-recorder.service
+PartOf=guardian.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/guardian-detect
+Restart=on-failure
+RestartSec=5s
+User=guardian-detect
+Group=guardian
+
+# Security hardening
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+NoNewPrivileges=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallFilter=@system-service
+SystemCallErrorNumber=EPERM
+
+CapabilityBoundingSet=
+AmbientCapabilities=
+
+ConfigurationDirectory=guardian
+StateDirectory=guardian
+LogsDirectory=guardian
+
+[Install]
+WantedBy=guardian.target
