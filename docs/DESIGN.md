@@ -439,3 +439,23 @@ Design implications:
 - Hub sizing: hardware video encode/decode (Quick Sync / NVENC / VCN) strongly preferred for multi-4K; 8K limited to few concurrent streams unless the NUC-class box is upgraded.
 - Storage/bitrate planning and retention UI must surface estimated disk use when 4K/8K is enabled.
 - BOM and live-view defaults still use substreams remotely; tap-to-HD becomes tap-to-configured-max (4K/8K when selected and uplink allows).
+
+## Addendum — Wired-only hardware (2026-09-13)
+
+**Hard rule:** All hardware that talks to the hub is **wired**. No device may connect to the hub wirelessly.
+
+### Forbidden at the hub edge
+- Wi-Fi cameras
+- Zigbee / Z-Wave / Thread / Bluetooth sensors or coordinators used as the site bus
+- Wireless door/window/PIR kits as primary zones
+- Wireless sirens as the primary alarm output (unless also hard-wired)
+
+### Required patterns
+- **Cameras / door / gate stations:** PoE Ethernet (or Ethernet + separate power), local RTSP; no vendor cloud dependency for core function
+- **Sensors:** hard-wired contacts and PIRs into a **wired zone expander** (Ethernet/USB/GPIO/RS-485) that the hub reaches over cable
+- **Siren / relays / gate strike:** wired 12 V / dry contact from a hub-controlled I/O module
+- **Admin phones:** may use Wi-Fi/cellular to reach the **relay in the cloud**; that is not a hub-edge wireless device
+
+### Software impact
+- Prefer `guardian-sensors` drivers for wired expanders over Zigbee2MQTT-style stacks
+- Camera VLAN remains Ethernet-only
