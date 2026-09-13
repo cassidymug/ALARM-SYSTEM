@@ -1,6 +1,6 @@
 # Guardian Wired Zone Expander — Hardware Design Spec
 
-**Status:** Draft v0.1 (2026-09-13)  
+**Status:** Draft v0.2 (2026-09-13)  
 **Product:** Custom wired I/O board for Guardian alarm edge  
 **Constraints:** Wired-only hub edge; own firmware/protocol; minimize known/unknown vendor vulns; Zig on hub side (`guardian-sensors`)
 
@@ -38,11 +38,11 @@
 
 ## 3. Electrical / zone design
 
-### 3.1 Zone inputs (v1 target: **8 zones**)
+### 3.1 Zone inputs (v1 target: **32 zones**)
 
 | Feature | Spec |
 |---|---|
-| Zones | 8 supervised inputs (expandable to 16 on rev B) |
+| Zones | **32 supervised inputs** (rev A / PCBWay) |
 | Loop voltage | ~5–12 V sense (choose one rail; prefer 12 V alarm-style) |
 | Supervision | Series EOL resistor (e.g. 4.7 kΩ or 2.2 kΩ — pick one and standardize) |
 | Detect | Normal / Alarm / Open (cut) / Short |
@@ -186,7 +186,7 @@ Prototype path: **nucleo/dev board + W5500 breakout + relay HAT** to prove GXP +
 
 ## 9. Open decisions (need pick soon)
 
-1. **8 vs 16 zones** on first PCB.  
+1. ~~Zone count~~ → **LOCKED: 32 zones** (PCBWay rev A).  
 2. **PoE PD** for board power vs barrel 12 V only.  
 3. **MCU family** (STM32G0/G4 vs other no-RF).  
 4. Default on **link loss**: silent vs local siren.  
@@ -194,9 +194,52 @@ Prototype path: **nucleo/dev board + W5500 breakout + relay HAT** to prove GXP +
 
 ## 10. Success criteria for rev A
 
-- 8 supervised zones correctly classify secure/alarm/open/short.
+- **32** supervised zones correctly classify secure/alarm/open/short.
 - mTLS session to hub; zone events reach `guardian-alarm`.
 - Siren + 1 relay controllable from hub.
 - No RF components on BOM.
 - Schematic + BOM + test procedure in repo.
 
+
+
+---
+
+## Locked defaults (v0.2)
+
+| Item | Decision |
+|------|----------|
+| Zone count | **32** supervised EOL inputs |
+| Fabrication | **KiCad → PCBWay → bench test** |
+| Power (rev A) | **12 V barrel / terminal** (PoE PD deferred to rev B unless layout allows easy option) |
+| EOL resistor | **4.7 kΩ** site standard |
+| Link loss default | **Silent** (no local siren auto-trigger); configurable later |
+| Radios | **None** |
+
+## PCBWay spin checklist
+
+### Design deliverables (KiCad)
+1. Schematic: MCU, Ethernet PHY/W5500, 32× zone front-ends, siren MOSFET, ≥2 relays, power, TVS/PTC
+2. PCB: prefer **4-layer** for analog zone returns vs digital/Ethernet (2-layer only if forced by cost — not recommended at 32 zones)
+3. Mechanical: DIN-rail or metal-can plate; terminal blocks for zones 1–32; earth/shield stud
+4. Export: Gerbers + drill + IPC-356 + BoM + CPL (pick-and-place) + assembly drawing
+5. README: net classes, impedance notes for Ethernet, test-point map
+
+### PCBWay order (recommended rev A)
+- Qty: **5 boards** (bring-up + spares)
+- Surface finish: ENIG
+- Stackup: 4-layer, 1.6 mm
+- Optional: PCBWay **PCBA** for sticky parts (MCU, Ethernet, bucks); hand-stuff terminals/relays if needed
+- Stencil: yes if PCBA or self-reflow
+
+### Bench test after return
+1. Power rails / no smoke
+2. SWD flash + blink / Ethernet link
+3. Per-zone: secure / alarm / open / short with 4.7k EOL jig
+4. GXP mTLS to hub / `guardian-sensors`
+5. Siren + relay loads
+6. Soak test (thermal, 32-zone scan rate)
+
+### Rev A architecture note (32 zones)
+- Use **analog mux + ADC** and/or **multi-channel ADC / GPIO expanders** (e.g. several 8-ch front-end groups) rather than 32 discrete ADC pins
+- Group zones in banks of 8 for layout and test jigs
+- Keep zone analog returns star/local to each bank; separate from Ethernet return as much as practical
