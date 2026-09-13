@@ -1,8 +1,10 @@
 # Guardian Zone Expander - Hardware Specifications
 
-## GXP-32 Multi-Sensor Hub
+## GXP-32 Modular Expansion Module
 
-The Guardian Zone Expander is a **multi-function sensor hub** that supports various sensor types beyond simple door/window contacts.
+The Guardian GXP-32 is a **modular expansion module** that adds additional sensor capacity to the Guardian GH-1000 Main Hub. It connects via RS-485 bus and supports various sensor types beyond simple door/window contacts.
+
+**Note:** The GH-1000 Main Hub includes 32 zones built-in. This GXP-32 module is for installations requiring **more than 32 zones** (large homes, commercial buildings).
 
 ## Supported Sensor Types
 
@@ -395,6 +397,42 @@ Optional PoE:
 - **CE** (European conformity)
 - **RoHS** (Lead-free)
 
+## System Architecture
+
+### Main Hub + Modular Expanders
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│  Guardian GH-1000 Main Hub                                       │
+│  - 24× PoE camera ports                                          │
+│  - 32× zones (built-in)                                          │
+│  - 2× USB 3.0, 2× USB-C                                          │
+│  - Intel CPU, 16GB RAM, 256GB NVMe                               │
+│  - RS-485 master                                                 │
+└─────────────┬────────────────────────────────────────────────────┘
+              │ RS-485 Bus (twisted pair, Cat5e)
+              ↓
+┌─────────────┴────────────────────────────────────────────────────┐
+│  GXP-32 Expander #1                                              │
+│  - +32 zones, +8 analog, +4 smoke, +2 pulse, +4 relay           │
+│  - RS-485 slave (address 1)                                      │
+└─────────────┬────────────────────────────────────────────────────┘
+              │
+              ↓
+┌─────────────┴────────────────────────────────────────────────────┐
+│  GXP-32 Expander #2                                              │
+│  - +32 zones, +8 analog, +4 smoke, +2 pulse, +4 relay           │
+│  - RS-485 slave (address 2)                                      │
+└─────────────┬────────────────────────────────────────────────────┘
+              │
+              ... (up to 32 expanders total)
+```
+
+**Total Capacity:**
+- Main hub: 32 zones
+- + 32 expanders: 32 × 32 = 1,024 zones
+- **Grand total: 1,056 zones** (more than enough for any installation)
+
 ## Comparison to Commercial Expanders
 
 | Feature | Guardian GXP-32 | DSC PC5108 | Honeywell 4204 |
@@ -405,10 +443,11 @@ Optional PoE:
 | **Relay outputs** | 4 | 0 | 4 |
 | **Pulse counters** | 2 | 0 | 0 |
 | **Protocol** | Open (GXP) | Proprietary | Proprietary |
-| **Communication** | RS-485 + Ethernet | Proprietary bus | Proprietary bus |
-| **Scalability** | 32 expanders (1024 zones) | Limited | Limited |
+| **Communication** | RS-485 (to main hub) | Proprietary bus | Proprietary bus |
+| **Scalability** | 32 expanders (1056 zones) | Limited | Limited |
 | **Price** | **$55 DIY / $120 retail** | $130 | $80 |
 | **Open source** | ✅ Yes | ❌ No | ❌ No |
+| **Requires main hub** | ✅ GH-1000 | ❌ Proprietary panel | ❌ Proprietary panel |
 
 **Guardian GXP-32 is more capable and cheaper!**
 
